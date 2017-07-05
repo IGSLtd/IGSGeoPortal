@@ -10,18 +10,27 @@
 
 	<context:component-scan base-package="com.igs.geoportal"></context:component-scan>
 
-	<mvc:annotation-driven></mvc:annotation-driven>
+	<!-- <context:property-placeholder location="configuration.properties"/> -->
+	<!-- <bean id="placeholderConfig" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location" >
+			<value>/home/zahid/Documents/workspace-sts-3.8.4.RELEASE/IGSGeoPortal/configuration.properties</value>
+		</property>
+	</bean>-->
 	
-	<mvc:resources mapping="/resources/**" location="/resources/" cache-period="31556926"/>
+	<context:property-placeholder location="file:/home/IGSWeb/webs/Geo-portal/configuration.properties"/>
+
+	<mvc:annotation-driven></mvc:annotation-driven>
+
+	<mvc:resources mapping="/resources/**" location="/resources/"
+		cache-period="31556926" />
 
 	<bean id="myDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
 		destroy-method="close">
 
-		<property name="driverClass" value="com.mysql.jdbc.Driver" />
-		<property name="jdbcUrl" value="jdbc:mysql://localhost/IGSGeoData" />
-		<property name="user" value="root" />
-		<!-- <property name="password" value="Testserver72((" /> -->
-		<property name="password" value="MELjXm" />
+		<property name="driverClass" value="${hibernate.connection.driver_class}" />
+		<property name="jdbcUrl" value="${hibernate.connection.url}" />
+		<property name="user" value="${hibernate.connection.username}" />
+		<property name="password" value="${hibernate.connection.password}" />
 		<property name="minPoolSize" value="5" />
 		<property name="maxPoolSize" value="10" />
 		<property name="maxIdleTime" value="30000" />

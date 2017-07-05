@@ -42,7 +42,7 @@
                         var map = new Map("mapDiv", {
                             basemap: "national-geographic",
                             center: [-0.14256029394528014, 53.564213727494035], //long, lat
-                            zoom: 12
+                            zoom: 10
                         });
 
 
@@ -186,37 +186,61 @@
 <body>
 	<div class="panel panel-primary panel-fixed">
 		<div class="panel-heading">
-			<h3 class="panel-title">Find Geology by Rock Category</h3>
+			<h3 class="panel-title">Search with rock Category</h3>
 		</div>
 		<div class="panel-body">
-			<form action="findWithPostcode">
-				<div>
-					<br /> <input type="text" name="postcode" id="postcode" placeholder="Postcode" /> <input class="btn btn-success"
-						type="submit" value="Find" /> <br />
+			<div class="btn-toolbar">
+				<div class="btn-group">
+					<button id="btnStreets" class="btn btn-default">Streets</button>
+					<button id="btnSatellite" class="btn btn-default">Satellite</button>
+					<button id="btnHybrid" class="btn btn-default">Hybrid</button>
+					<button id="btnTopo" class="btn btn-default">Topo</button>
+					<!--<button id="btnGray" class="btn btn-default">Gray</button>-->
+					<!--<button id="btnNatGeo" class="btn btn-default">National Geographic</button>-->
 				</div>
-			</form>
-			<br>
+			</div>
+			
+			<div>
+			<br/>
+
+			</div>
 			<div class="form-group">
+				<!-- <select class="form-control" id="cat">
+                        <option value="ATM">ATM</option>
+                        <option value="Museum">Museum</option>
+                        <option value="Convention Center">Convention Center</option>
+                        <option value="Sushi">Sushi</option>
+                        <option value="Tourist Attraction">Tourist Attraction</option>
+                        <option value="Brewpub">Brewpub</option>
+                        <option value="Breakfast">Breakfast</option>
+                        <option value="Pizza">Pizza</option>
+                        <option value="Vegetarian Food">Vegetarian Food</option>
+                    </select>
+                    -->
+
 				<select class="form-control" id="cat">
-					<option value="Please select rock category">Please select
-						rock category</option>
+				<option value="Please select rock category">Please select rock category</option>
 					<c:forEach var="row" items="${rockCatgories}">
 						<option value="${row.categoryName}">${row.categoryName}</option>
 					</c:forEach>
 				</select>
+
 			</div>
 			<div class="form-inline">
-				<div id="searchmapCheckbox" class="checkbox">
+				<div class="checkbox" id="searchmapCheckbox">
 					<label> <input id="useMapExtent" type="checkbox" checked />
 						Search map only
 					</label>
 				</div>
 				<button class="btn btn-success" id="btnSearch">Go</button>
 				<button id="btnClear" class="btn btn-default">Clear</button>
-				<br>
-				<br>More information on rock categories<br> can be found <a
-					href="http://igsint.com" target="_blank">here</a>
+				<br> <br>More information on categories<br> can be found <a href="http://www.igsint.com/"
+					target="_blank">here</a>
+					 
 			</div>
+
+
+
 		</div>
 	</div>
 	<div id="mapDiv"></div>
