@@ -163,6 +163,13 @@
 			<version>1.1.1</version>
 		</dependency>
 
+		<!-- https://mvnrepository.com/artifact/uk.org.mygrid.resources.jcoord/jcoord -->
+		<dependency>
+		    <groupId>uk.org.mygrid.resources.jcoord</groupId>
+		    <artifactId>jcoord</artifactId>
+		    <version>1.0</version>
+		</dependency>
+
 
 	</dependencies>
 	<build>

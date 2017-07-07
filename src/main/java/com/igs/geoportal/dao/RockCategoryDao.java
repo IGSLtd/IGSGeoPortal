@@ -14,9 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import com.esri.core.geometry.Point;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.igs.geoportal.businesslogic.IGSConversionHelper;
 import com.igs.geoportal.entity.Coordinate;
 import com.igs.geoportal.entity.RockCategory;
@@ -26,6 +23,8 @@ import com.igs.geoportal.entity.RockDetails;
 public class RockCategoryDao {
 
 	private Logger logger = Logger.getLogger(RockCategoryDao.class);
+	
+
 	private IGSConversionHelper conversionHelper = new IGSConversionHelper();
 
 	@Autowired
@@ -50,24 +49,42 @@ public class RockCategoryDao {
 				Coordinate c = getCategoryId(rd);
 				if (c.getCategoryId() > 0) {
 
-					String sql = "select * from RockCategory r inner join Coordinate c on r.categoryId = c.categoryId where r.categoryId ="
-							+ c.getCategoryId();
-					NativeQuery<RockCategory> query = session.createNativeQuery(sql, RockCategory.class);
+					String sql = "from RockCategory as r inner join r.coordinates as coor where r.categoryId= :categoryId";
+					
+					logger.debug(sql);
+					
+					Query query = session.createQuery(sql).setParameter("categoryId", c.getCategoryId());
 
-					this.rockCategory = query.getResultList();
+					
+					List<Object[]> listResult = query.list();
+					List<Coordinate> coo = new ArrayList<Coordinate>();
+					this.rockCategory = new ArrayList<RockCategory>();
+					
+					for(Object[] aRow : listResult) {
+						
+						logger.debug(aRow[0]);
+						
+						this.rockCategory.add((RockCategory) aRow[0]); 
+					    coo.add((Coordinate) aRow[1]); 
 
-					return process(rockCategory);
+					}
+					
+					logger.debug(rockCategory);
+					logger.debug(coo);
+					return process(rockCategory, coo);
+
 				}
 
 			} catch (Exception e) {
-				logger.debug(e);
+				logger.debug(e, e);
 			}
 		}
 
 		return null;
 	}
 
-	private String process(List<RockCategory> cat) throws Exception {
+
+	private String process(List<RockCategory> cat, List<Coordinate> coo) throws Exception {
 
 		JSONObject obj = new JSONObject();
 
@@ -75,19 +92,24 @@ public class RockCategoryDao {
 
 			JSONArray candidates = new JSONArray();
 
-			for (RockCategory c : cat) {
+			for (int i=0; i<cat.size(); i++) {
 
 				JSONObject loc = new JSONObject();
 
-				Point pnt = new Point(c.getCoordinate().getxAxis(), c.getCoordinate().getyAxis());
+				logger.debug("UTM coordinates, x=" + coo.get(i).getxAxis() + " y="  + coo.get(i).getyAxis());
+				
+				Point pnt = new Point(coo.get(i).getxAxis(), coo.get(i).getyAxis());
 
-				Point location = conversionHelper.fromUTMToLngLat(pnt);
+				Point location = conversionHelper.fromBNGLngLat(pnt);
 
 				loc.put("x", location.getX());
 				loc.put("y", location.getY());
+				
+				logger.debug("Lat=" + location.getX() + " Lng="  + location.getY());
+				
 				JSONObject attributes = new JSONObject();
-				attributes.put("Place_addr", c.getRcs());
-				attributes.put("PlaceName", c.getRcs_d());
+				attributes.put("Place_addr", cat.get(i).getRcs());
+				attributes.put("PlaceName", cat.get(i).getRcs_d());
 
 				JSONObject extent = new JSONObject();
 				extent.put("xmin", location.getX());
@@ -96,13 +118,14 @@ public class RockCategoryDao {
 				extent.put("ymax", location.getY());
 
 				JSONObject wrapper = new JSONObject();
-				wrapper.put("address", c.getCategoryName());
+				wrapper.put("address", cat.get(i).getCategoryName());
 				wrapper.put("location", loc);
 				wrapper.put("score", 100);
 				wrapper.put("attributes", attributes);
 				wrapper.put("extent", extent);
 
 				candidates.add(wrapper);
+
 
 			}
 
@@ -122,6 +145,7 @@ public class RockCategoryDao {
 		return obj.toJSONString();
 	}
 
+
 	@Transactional
 	private Coordinate getCategoryId(RockDetails rd) {
 
@@ -134,7 +158,7 @@ public class RockCategoryDao {
 		logger.debug("Lat=" + lat + ": Lng=" + lng);
 
 		try {
-			String sql = "SELECT *, (6371 * acos (cos ( radians(" + lat
+			String sql = "SELECT coordinateId,categoryId, xAxis, yAxis, (6371 * acos (cos ( radians(" + lat
 					+ ") ) * cos( radians( xAxis ) ) * cos( radians( yAxis ) - radians(" + lng + ") ) + sin ( radians("
 					+ lat
 					+ ") ) * sin( radians( yAxis ) ))) AS distance FROM Coordinate HAVING distance < 100 ORDER BY distance;";
@@ -146,7 +170,7 @@ public class RockCategoryDao {
 			return query.getSingleResult();
 
 		} catch (Exception e) {
-			logger.debug(e);
+			logger.debug(e, e);
 		}
 
 		return null;

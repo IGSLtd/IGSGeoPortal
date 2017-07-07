@@ -5,6 +5,9 @@ import org.apache.log4j.Logger;
 import com.esri.core.geometry.Point;
 import com.igs.geoportal.interfaces.IGSGeoDataConvertor;
 
+import uk.me.jstott.jcoord.LatLng;
+import uk.me.jstott.jcoord.OSRef;
+
 public class IGSConversionHelper implements IGSGeoDataConvertor {
 	
 	private Logger logger = Logger.getLogger(IGSGeoDataConvertor.class);
@@ -62,6 +65,26 @@ public class IGSConversionHelper implements IGSGeoDataConvertor {
 				mercatorX_lon = x;
 				mercatorY_lat = 3189068.5 * Math.log((1.0 + Math.sin(a)) / (1.0 - Math.sin(a)));
 				return new Point(mercatorX_lon, mercatorY_lat);
+				
+			} catch (Exception e) {
+				logger.error(e, e);
+			}
+		}
+
+		return null;
+	}
+	
+	//from British National Grid to long lat
+	public Point fromBNGLngLat(Point pnt) {
+
+		if (pnt != null) {
+
+			try {
+				
+		        LatLng latLng = new OSRef(pnt.getX(), pnt.getY()).toLatLng();
+		        latLng.toWGS84();
+		        
+		        return new Point(latLng.getLat(), latLng.getLng());
 				
 			} catch (Exception e) {
 				logger.error(e, e);

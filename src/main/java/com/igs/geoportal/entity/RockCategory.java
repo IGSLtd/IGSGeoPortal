@@ -1,5 +1,7 @@
 package com.igs.geoportal.entity;
 
+import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -17,12 +19,10 @@ public class RockCategory {
     private String rcs;
     private String rcs_d;
     private String age_onegl;
-    
-    @ManyToOne
-    @JoinColumn(name="categoryId", insertable = false, updatable = false)
-    private Coordinate coordinate;
 
-	
+	@OneToMany(cascade=CascadeType.ALL)
+	@JoinColumn(name="categoryId")
+	private Set<Coordinate> coordinates; 
 	
 	public long getCategoryId() {
 		return categoryId;
@@ -55,11 +55,11 @@ public class RockCategory {
 		this.age_onegl = age_onegl;
 	}	
 	
-	public Coordinate getCoordinate() {
-		return coordinate;
+	public Set<Coordinate> getCoordinates() {
+		return coordinates;
 	}
-	public void setCoordinates(Coordinate coordinates) {
-		this.coordinate = coordinates;
+	public void setCoordinates(Set<Coordinate> coordinates) {
+		this.coordinates = coordinates;
 	}
 	@Override
 	public String toString() {

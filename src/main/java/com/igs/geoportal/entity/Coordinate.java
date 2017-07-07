@@ -2,10 +2,12 @@ package com.igs.geoportal.entity;
 
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 
 @Entity
 public class Coordinate implements Serializable{
@@ -13,8 +15,11 @@ public class Coordinate implements Serializable{
 	@Id
     private long coordinateId;
 
+
     private long categoryId;   
     private double xAxis, yAxis;
+    
+    
 	public long getCoordinateId() {
 		return coordinateId;
 	}
