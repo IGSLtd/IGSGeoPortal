@@ -26,7 +26,7 @@ public class GeoDataController {
 	@Autowired
 	RockCategoryDao catDao;
 	
-	@RequestMapping("/findAddressCandidates")
+	@RequestMapping(value = "/findAddressCandidates", method = RequestMethod.GET, produces = "application/json")
 	public ResponseEntity<String> list(@ModelAttribute("rockDetails") RockDetails rockDetails) {
 
 		

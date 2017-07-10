@@ -18,6 +18,10 @@
 	</bean>-->
 	
 	<context:property-placeholder location="file:/home/IGSWeb/webs/Geo-portal/configuration.properties"/>
+	
+	<bean id="igsProps" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+  		<property name="location" value="file:/home/IGSWeb/webs/Geo-portal/configuration.properties"/>
+	</bean>
 
 	<mvc:annotation-driven></mvc:annotation-driven>
 

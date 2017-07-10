@@ -24,6 +24,8 @@
 <!-- ArcGIS API for JavaScript library references -->
 <script src="//js.arcgis.com/3.10compact"></script>
 <script>
+			var map;
+
             require(["esri/map",
                 "esri/tasks/locator",
                 "esri/request",
@@ -39,10 +41,10 @@
                         "use strict"
 
                         // Create map
-                        var map = new Map("mapDiv", {
+                       	map = new Map("mapDiv", {
                             basemap: "national-geographic",
                             center: [-0.14256029394528014, 53.564213727494035], //long, lat
-                            zoom: 10
+                            zoom: 9
                         });
 
 
@@ -60,7 +62,7 @@
 
                         // Create geoservice
                         //var geocodeService = new Locator("//geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
-                        var geocodeService = new Locator("${pageContext.request.contextPath}");
+                        var geocodeService = new Locator("${pageUrl}");
 
                         // Wire events
                         on(map, "load", function () {
@@ -71,7 +73,32 @@
                             on(dom.byId("cat"), "change", function (event) {
                                 geoSearch();
                             });
-                        });
+
+                            //on(dom.byId("mapDiv"), "click", mouseClickHandler);
+                        }); 
+
+                        function mouseClickHandler() {
+                            alert('Mouse clicked');
+                        }                       
+
+                        function fillCategoryLists(places) {	
+
+                        	var select = document.getElementById('cat');
+                        	var place;
+                        	
+                            for (var i = 0; i < places.addresses.length; i++) {
+                                
+                                place = places.addresses[i];
+
+                                var opt = document.createElement('option');
+                                opt.value = place.address;
+                                opt.innerHTML = place.address;
+                                select.appendChild(opt);
+                                
+                            }
+
+
+                         }
 
                         // Geocode against the user input
                         function geoSearch() {
@@ -94,28 +121,37 @@
                                 address: {
                                     "category": dom.byId("cat").value
                                 },
-                                outFields: ["Place_addr", "PlaceName"],
+                                outFields: ["Place_addr", "PlaceName", "AgeOnegl"],
                                 searchExtent: boundingBox,
                                 location: map.extent.getCenter(),
                                 distance: 1
                             }
                             // Execute geosearch
                             geocodeService.addressToLocations(options);
+                            //parseJsonForOption();
                         }
 
                         // Geocode results
                         function geocodeResults(places) {
                             if (places.addresses.length > 0) {
                                 clearFindGraphics();
+
+                                fillCategoryLists(places);
+                                
                                 // Objects for the graphic
-                                var place, attributes, infoTemplate, pt, graphic, placeName = "";
+                                var rcs, rcs_d, age_onegl, place, attributes, infoTemplate, pt, graphic, placeName = "";
                                 // Create and add graphics with pop-ups
                                 for (var i = 0; i < places.addresses.length; i++) {
                                     place = places.addresses[i];
+
+									rcs = place.attributes.Place_addr;
+									rcs_d = place.attributes.PlaceName;
+									age_onegl = place.attributes.AgeOnegl;
+									
                                     pt = place.location;
                                     placeName = place.attributes.Place_addr ? "${address}<br/>" : '';
                                     attributes = {name: place.attributes.PlaceName, address: place.attributes.Place_addr, score: place.score, lat: pt.y.toFixed(5), lon: pt.x.toFixed(5)};
-                                    infoTemplate = new InfoTemplate("${name}", placeName + "Lat/Lon: ${lat},${lon}<br/>Score: ${score}" + "<br/><a href='#' onclick='window.zoomToPlace(" + pt.x + "," + pt.y + ")'>Zoom</a>");
+                                    infoTemplate = new InfoTemplate(place.address, "RCS: "+ rcs + "<br/>RCS_D: " + rcs_d + "<br/>AGE_ONEGL: " + age_onegl);
                                     graphic = new Graphic(pt, symbol, attributes, infoTemplate);
                                     map.graphics.add(graphic);
                                 }
@@ -141,6 +177,8 @@
                                 multiPoint.addPoint(places[i].location);
                             }
                             map.setExtent(multiPoint.getExtent().expand(1.5));
+
+                            
                         }
 
                         function clearFindGraphics() {
@@ -161,28 +199,57 @@
 
                         // Wire UI Events
                         on(dom.byId("btnStreets"), "click", function () {
-                            map.setBasemap("streets");
+                            //map.setBasemap("streets");
+                            //changeTab("streets");
+                            pageLoad();
                         });
                         on(dom.byId("btnSatellite"), "click", function () {
-                            map.setBasemap("satellite");
+                            //map.setBasemap("satellite");
+                        	changeTab("satellite");
                         });
                         on(dom.byId("btnHybrid"), "click", function () {
-                            map.setBasemap("hybrid");
+                            //map.setBasemap("hybrid");
+                            changeTab("hybrid");
                         });
                         on(dom.byId("btnTopo"), "click", function () {
-                            map.setBasemap("topo");
+                            //map.setBasemap("topo");
+                            changeTab("topo");
                         });
                         on(dom.byId("btnGray"), "click", function () {
-                            map.setBasemap("gray");
+                            //map.setBasemap("gray");
+                            changeTab("gray");
                         });
                         on(dom.byId("btnNatGeo"), "click", function () {
-                            map.setBasemap("national-geographic");
+                            //map.setBasemap("national-geographic");
+                            changeTab("national-geographic");
                         });
                     }
             );
         </script>
+        
+        <script type="text/javascript">
+	        function pageLoad() {
+	        	map.setBasemap("streets");
+	        	var street = document.getElementById("btnStreets");
+	        	street.style.backgroundColor = "#ebebeb";
+	        }
+
+	        function changeTab(t) {
+	        
+	        	map.setBasemap(t);
+
+	        	var street = document.getElementById("btnStreets");
+	        	
+	        	if(t != "btnStreets") {		   		
+			   		street.style.backgroundColor = "#fff";
+	        	}
+
+		   	}
+
+        </script>
 
 </head>
+<!-- <body onload="pageLoad();"> -->
 <body>
 	<div class="panel panel-primary panel-fixed">
 		<div class="panel-heading">

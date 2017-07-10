@@ -1,9 +1,14 @@
 package com.igs.geoportal;
 
+import java.util.Properties;
+
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -16,7 +21,7 @@ import org.springframework.web.servlet.ModelAndView;
 import com.igs.geoportal.dao.RockCategoryDao;
 import com.igs.geoportal.entity.RockDetails;
 
-@Controller			
+@Controller	
 public class HomeController {
 	
 	private Logger logger = Logger.getLogger(HomeController.class);
@@ -27,6 +32,10 @@ public class HomeController {
 	
 	@Autowired
 	RockCategoryDao catDao;
+	
+	@Autowired
+	@Resource(name = "igsProps")
+	private Properties props;
 
 	
 	@RequestMapping("/")
@@ -48,6 +57,7 @@ public class HomeController {
 		catDao.getRockDetails(rd);
 		
 		ModelAndView mv = new ModelAndView("/jsp/portal.jsp");
+		mv.addObject("pageUrl", props.getProperty("host.url"));
 		mv.addObject("rockCatgories", catDao.getRockCategory());
 		return mv;
 	}

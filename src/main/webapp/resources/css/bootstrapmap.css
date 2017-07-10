@@ -94,7 +94,7 @@
 
 /* Title Pane font and buttons */
 .esriPopup .titlePane, .esriPopup.light .titlePane, .esriPopup.dark .titlePane {
-  height: 34px;
+  height: 50px;
   padding: 10px 0 0 10px;
   background-color: #f7f7f7;
   font-size: 14px;
