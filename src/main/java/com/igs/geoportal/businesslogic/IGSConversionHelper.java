@@ -10,7 +10,7 @@ import uk.me.jstott.jcoord.OSRef;
 
 public class IGSConversionHelper implements IGSGeoDataConvertor {
 	
-	private Logger logger = Logger.getLogger(IGSGeoDataConvertor.class);
+	private Logger logger = Logger.getLogger(IGSConversionHelper.class);
 
 	public Point fromUTMToLngLat(Point pnt) {
 

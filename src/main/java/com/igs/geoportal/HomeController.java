@@ -50,9 +50,9 @@ public class HomeController {
 		rd.setCategory("UNNAMED IGNEOUS INTRUSION, PALAEOGENE");
 		rd.setF("json");
 		rd.setOutFields("Place_addr,PlaceName");
-		rd.setSearchExtent("{\"xmin\":-157660.42679838315,\"ymin\":7041348.7914313795,\"xmax\":125920.94813972936,\"ymax\":7134754.839995901,\"spatialReference\":{\"wkid\":102100,\"latestWkid\":3857}}");
+		rd.setSearchExtent("{\"xmin\":-269575.9589992872,\"ymin\":7237571.912886106,\"xmax\":14005.415938825274,\"ymax\":7319665.281264418,\"spatialReference\":{\"wkid\":102100,\"latestWkid\":3857}}");
 		rd.setDistance(1);
-		rd.setLocation("{\"x\":-15869.739329326898,\"y\":7088051.81571364,\"spatialReference\":{\"wkid\":102100,\"latestWkid\":3857}}");
+		rd.setLocation("{\"x\":-127785.27153023097,\"y\":7278618.597075262,\"spatialReference\":{\"wkid\":102100,\"latestWkid\":3857}}");
 		
 		catDao.getRockDetails(rd);
 		

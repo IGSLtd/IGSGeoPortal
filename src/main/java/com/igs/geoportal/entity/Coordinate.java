@@ -17,9 +17,21 @@ public class Coordinate implements Serializable{
 
 
     private long categoryId;   
-    private double xAxis, yAxis;
+    private double xAxis, yAxis, lat, lon;
     
     
+	public double getLat() {
+		return lat;
+	}
+	public void setLat(double lat) {
+		this.lat = lat;
+	}
+	public double getLon() {
+		return lon;
+	}
+	public void setLon(double lon) {
+		this.lon = lon;
+	}
 	public long getCoordinateId() {
 		return coordinateId;
 	}
@@ -44,10 +56,13 @@ public class Coordinate implements Serializable{
 	public void setyAxis(double yAxis) {
 		this.yAxis = yAxis;
 	}
+	
 	@Override
 	public String toString() {
 		return "Coordinate [coordinateId=" + coordinateId + ", categoryId=" + categoryId + ", xAxis=" + xAxis
-				+ ", yAxis=" + yAxis + "]";
+				+ ", yAxis=" + yAxis + ", lat=" + lat + ", lon=" + lon + "]";
 	}
+
+	
     
 }

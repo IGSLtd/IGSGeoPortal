@@ -25,7 +25,6 @@
 <script src="//js.arcgis.com/3.10compact"></script>
 <script>
 			var map;
-
             require(["esri/map",
                 "esri/tasks/locator",
                 "esri/request",
@@ -36,14 +35,18 @@
                 "dojo/keys",
                 "dojo/on",
                 "dojo/dom",
-                "dojo/domReady!"],
+                "esri/geometry/Point",
+                "esri/geometry/Polyline",
+                "esri/geometry/Polygon",
+                "esri/SpatialReference",
+                "dojo/domReady!"],	
                     function (Map, Locator, esriRequest, InfoTemplate, Graphic, PictureMarkerSymbol, Multipoint, keys, on, dom) {
                         "use strict"
 
                         // Create map
                        	map = new Map("mapDiv", {
                             basemap: "national-geographic",
-                            center: [-0.14256029394528014, 53.564213727494035], //long, lat
+                            center: [-0.761248, 54.430794], //long, lat
                             zoom: 9
                         });
 
@@ -74,50 +77,80 @@
                                 geoSearch();
                             });
 
-                            //on(dom.byId("mapDiv"), "click", mouseClickHandler);
+                            //on(dom.byId("mapDiv"), "click", onMouseClick);
                         }); 
 
-                        function mouseClickHandler() {
-                            alert('Mouse clicked');
-                        }                       
+                        function onMouseClick() {
+                            //alert('Mouse clicked');
+                        	//geoSearch();
+                        }   
+                   
 
-                        function fillCategoryLists(places) {	
+                        function fillRockTypeLists(places) {	
 
                         	var select = document.getElementById('cat');
-                        	var place;
-                        	
-                            for (var i = 0; i < places.addresses.length; i++) {
-                                
-                                place = places.addresses[i];
 
-                                var opt = document.createElement('option');
-                                opt.value = place.address;
-                                opt.innerHTML = place.address;
-                                select.appendChild(opt);
-                                
-                            }
+                        	var place;
+
+                        	var len = places.addresses.length;
+
+                        	if(len == 0) {
+                        		setDefaultRockType();
+                            }else {
+
+                            	var rockType, prevRockType;
+                            	
+	                            for (var i = 0; i < len; i++) {
+	                                
+	                                place = places.addresses[i];
+	                                rockType = place.attributes.PlaceName;
+
+	                                if(rockType != prevRockType) {
+		                                var opt = document.createElement('option');
+		                                opt.value = rockType;
+		                                opt.innerHTML = rockType;
+		                                select.appendChild(opt);
+
+		                                prevRockType = rockType;
+			                        }
+
+	                                
+	                            }
+                        	}
 
 
                          }
 
+                        function setDefaultRockType() {	
+
+                        	var select = document.getElementById('cat');
+                        	var opt = document.createElement('option');
+                        	opt.value = document.getElementById('noData').textContent;
+                            opt.innerHTML = document.getElementById('noData').textContent;
+                            select.appendChild(opt);
+                         }
+                        
+
+                        function removeOptions(selectbox)
+                        {
+                            var i;
+                            for(i = selectbox.options.length - 1 ; i >= 0 ; i--)
+                            {
+                                selectbox.remove(i);
+                            }
+                        }
+
                         // Geocode against the user input
                         function geoSearch() {
+                        	clearFindGraphics();
+                        	removeOptions(document.getElementById('cat'));
+                            
                             var boundingBox;
                             if (dom.byId('useMapExtent').checked)
                                 boundingBox = map.extent;
                             // Set geocode options
                             var options = {
-                                /*you can combine multiple categories in a single search and even combine category searches and normal search strings:
-                                 
-                                 address:{
-                                 "SingleLine": "Pacific",
-                                 "category": "Aquarium, Tourist Attraction"
-                                 },
-                                 
-                                 but for now lets just search on a single category
-                                 
-                                 https://developers.arcgis.com/javascript/jsapi/locator-amd.html#addresstolocations       
-                                 */
+
                                 address: {
                                     "category": dom.byId("cat").value
                                 },
@@ -136,7 +169,7 @@
                             if (places.addresses.length > 0) {
                                 clearFindGraphics();
 
-                                fillCategoryLists(places);
+                                fillRockTypeLists(places);
                                 
                                 // Objects for the graphic
                                 var rcs, rcs_d, age_onegl, place, attributes, infoTemplate, pt, graphic, placeName = "";
@@ -157,12 +190,16 @@
                                 }
                                 zoomToPlaces(places.addresses);
                             } else {
-                                alert("Sorry, address or place not found.");
+                                alert(document.getElementById('noData').textContent);
+                                setDefaultRockType();
                             }
+
                         }
 
                         function geocodeError(errorInfo) {
-                            alert("Sorry, place or address not found!");
+
+                            alert(document.getElementById('noData').textContent);
+                            setDefaultRockType();
                         }
 
                         window.zoomToPlace = function zoomToPlace(lon, lat) {
@@ -172,12 +209,40 @@
                         }
 
                         function zoomToPlaces(places) {
+                            
                             var multiPoint = new Multipoint();
                             for (var i = 0; i < places.length; i++) {
                                 multiPoint.addPoint(places[i].location);
                             }
-                            map.setExtent(multiPoint.getExtent().expand(1.5));
+                            map.setExtent(multiPoint.getExtent().expand(1)); 
 
+                            //drawPolygon(places);
+                            
+                        }
+
+                        function drawPolygon(places) {
+                        	
+                        	var polygons = new Array(places.length);
+
+                            for (var i = 0; i < places.length; i++) {
+                            	polygons.push(places[i].location.y + ',' + places[i].location.x);
+                            }
+
+                            var polygon = new esri.geometry.Polygon(new esri.SpatialReference({wkid:4326})); 
+                            polygon.addRing([polygons]);
+
+                            polygon.spatialReference = map.spatialReference;
+
+                            console.log("Created polygons.");
+
+                            // Add the polygon to map
+                            var s = new esri.symbol.SimpleFillSymbol().setStyle(esri.symbol.SimpleFillSymbol.STYLE_SOLID);
+                            var polygonGraphic = new esri.Graphic(polygon, s, { keeper: true });
+                            var polyLayer = new esri.layers.GraphicsLayer({ id: "poly" });
+                            map.addLayer(polyLayer);
+                            polyLayer.add(polygonGraphic);
+                            
+                            console.log("Polygons added on the map.");
                             
                         }
 
@@ -246,14 +311,20 @@
 
 		   	}
 
+
         </script>
 
 </head>
 <!-- <body onload="pageLoad();"> -->
 <body>
+
+	<c:set var = "emptyRockTypeString" scope = "session" value = "No data available on this area."/>
+	
+	<div id="noData" style="display: none;"><c:out value = "${emptyRockTypeString}"/></div>
+
 	<div class="panel panel-primary panel-fixed">
 		<div class="panel-heading">
-			<h3 class="panel-title">Search with rock Category</h3>
+			<h3 class="panel-title">Search with rock type</h3>
 		</div>
 		<div class="panel-body">
 			<div class="btn-toolbar">
@@ -272,24 +343,23 @@
 
 			</div>
 			<div class="form-group">
-				<!-- <select class="form-control" id="cat">
-                        <option value="ATM">ATM</option>
-                        <option value="Museum">Museum</option>
-                        <option value="Convention Center">Convention Center</option>
-                        <option value="Sushi">Sushi</option>
-                        <option value="Tourist Attraction">Tourist Attraction</option>
-                        <option value="Brewpub">Brewpub</option>
-                        <option value="Breakfast">Breakfast</option>
-                        <option value="Pizza">Pizza</option>
-                        <option value="Vegetarian Food">Vegetarian Food</option>
-                    </select>
-                    -->
 
+				<p>List of rocks.</p>
 				<select class="form-control" id="cat">
-				<option value="Please select rock category">Please select rock category</option>
-					<c:forEach var="row" items="${rockCatgories}">
-						<option value="${row.categoryName}">${row.categoryName}</option>
-					</c:forEach>
+				
+				<c:choose>
+				    <c:when test="${!empty rockCatgories}">
+				        
+						    <c:forEach var="row" items="${rockCatgories}">
+								<option value="${row.rcs_d}">${row.rcs_d}</option>
+							</c:forEach>
+					
+				    </c:when>
+				    <c:otherwise>
+				
+							<option value="Please select rock type"><c:out value = "${emptyRockTypeString}"/></option>
+				    </c:otherwise>
+				</c:choose>
 				</select>
 
 			</div>

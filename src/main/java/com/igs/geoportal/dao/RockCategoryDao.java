@@ -1,7 +1,9 @@
 package com.igs.geoportal.dao;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Session;
@@ -26,7 +28,8 @@ public class RockCategoryDao {
 
 	private IGSConversionHelper conversionHelper = new IGSConversionHelper();
 	
-	private static final int SEARCH_RADIUS = 100;
+	private static final int SEARCH_RADIUS = 50;
+	private static final int LIMIT = 100;
 
 	@Autowired
 	private SessionFactory sessionFactory;
@@ -42,6 +45,8 @@ public class RockCategoryDao {
 
 		Session session = sessionFactory.getCurrentSession();
 
+		JSONObject obj = new JSONObject();
+		
 		if (rd != null) {
 
 			try {
@@ -51,50 +56,84 @@ public class RockCategoryDao {
 
 				List<Coordinate> coordinateList = getCategoryId(rd);
 				
-				logger.debug("Total coordinates found=" + coordinateList.size());
+				if(coordinateList != null 
+						&& !coordinateList.isEmpty()) {
+					
 				
-				for (Coordinate c : coordinateList) {
+					Map<String, RockCategory> hm = new HashMap<String, RockCategory>();
+				
+					logger.debug("Total coordinates found=" + coordinateList.size());
+				
+					for (Coordinate c : coordinateList) {
+	
+						if (c != null && c.getCategoryId() > 0) {
+	
+							String sql = "from RockCategory as r inner join r.coordinates as coor where r.categoryId= :categoryId";
+							Query query = session.createQuery(sql).setParameter("categoryId", c.getCategoryId());
+							List<Object[]> listResult = query.list();
 
-					if (c != null && c.getCategoryId() > 0) {
+							
+							for (Object[] aRow : listResult) {
+	
+								logger.debug(aRow[0]);
 
-						String sql = "from RockCategory as r inner join r.coordinates as coor where r.categoryId= :categoryId";
-						Query query = session.createQuery(sql).setParameter("categoryId", c.getCategoryId());
-						List<Object[]> listResult = query.list();
+								RockCategory rc = (RockCategory) aRow[0];
+								
+								if(!hm.containsKey(rc.getRcs_d())) {
+									hm.put(rc.getRcs_d(), rc);
+									this.rockCategory.add(rc);
+								}
+								
+								coo.add((Coordinate) aRow[1]);
 
-						for (Object[] aRow : listResult) {
-
-							logger.debug(aRow[0]);
-
-							this.rockCategory.add((RockCategory) aRow[0]);
-							coo.add((Coordinate) aRow[1]);
-
+	
+							}
+	
 						}
-
-						logger.debug(rockCategory);
-						logger.debug(coo);
-
 					}
-				}
+					
+					logger.debug(rockCategory);
+					//logger.debug(coo);
+					
+					JSONArray candidates = new JSONArray();
+					
+					for(RockCategory cat : rockCategory) {
+						
+						logger.debug(cat);
+						process(cat, coo, candidates);
+						
+					}
+					
+					JSONObject spatialRef = new JSONObject();
+					spatialRef.put("wkid", 4326);
+					spatialRef.put("latestWkid", 4326);
+
+					obj.put("spatialReference", spatialRef);
+					obj.put("candidates", candidates);
+
+					logger.debug("JSON=" + obj.toJSONString());
+					return obj.toJSONString();
 				
-				return process(rockCategory, coo);
+				}
 
 			} catch (Exception e) {
-				logger.debug(e, e);
+				logger.error(e, e);
 			}
 		}
 
-		return null;
+		return obj.toJSONString();
 	}
+	
 
-	private String process(List<RockCategory> cat, List<Coordinate> coo) throws Exception {
+	private void process(RockCategory cat, List<Coordinate> coo, JSONArray candidates) throws Exception {
 
-		JSONObject obj = new JSONObject();
+		
 
-		if (!cat.isEmpty()) {
+		if (cat != null) {
 
-			JSONArray candidates = new JSONArray();
+			
 
-			for (int i = 0; i < cat.size(); i++) {
+			for (int i = 0; i < coo.size(); i++) {
 
 				JSONObject loc = new JSONObject();
 
@@ -109,9 +148,9 @@ public class RockCategoryDao {
 						+ "Lat=" + location.getX() + " Lng=" + location.getY());
 
 				JSONObject attributes = new JSONObject();
-				attributes.put("Place_addr", cat.get(i).getRcs());
-				attributes.put("PlaceName", cat.get(i).getRcs_d());
-				attributes.put("AgeOnegl", cat.get(i).getAge_onegl());
+				attributes.put("Place_addr", cat.getRcs());
+				attributes.put("PlaceName", cat.getRcs_d());
+				attributes.put("AgeOnegl", cat.getAge_onegl());
 
 				JSONObject extent = new JSONObject();
 				extent.put("xmin", location.getY());
@@ -120,36 +159,30 @@ public class RockCategoryDao {
 				extent.put("ymax", location.getX());
 
 				JSONObject wrapper = new JSONObject();
-				wrapper.put("address", cat.get(i).getCategoryName());
+				wrapper.put("address", cat.getCategoryName());
 				wrapper.put("location", loc);
 				wrapper.put("score", 100);
 				wrapper.put("attributes", attributes);
 				wrapper.put("extent", extent);
-
 				candidates.add(wrapper);
 
 			}
 
-			JSONObject spatialRef = new JSONObject();
-			spatialRef.put("wkid", 4326);
-			spatialRef.put("latestWkid", 4326);
 
-			obj.put("spatialReference", spatialRef);
-			obj.put("candidates", candidates);
 
-			logger.debug("JSON=" + obj.toJSONString());
-
-			return obj.toJSONString();
 
 		}
 
-		return obj.toJSONString();
 	}
+	
+	
 
 	@Transactional
 	private List<Coordinate> getCategoryId(RockDetails rd) {
 
 		Session session = sessionFactory.getCurrentSession();
+		List<Coordinate> lists = new ArrayList<Coordinate>();
+		Map<Long, Long> hm = new HashMap();
 
 		Point p = conversionHelper.fromUTMToLngLat(new Point(rd.getX(), rd.getY()));
 
@@ -158,22 +191,36 @@ public class RockCategoryDao {
 		logger.debug("Lat=" + lat + ": Lng=" + lng);
 
 		try {
-			String sql = "SELECT coordinateId,categoryId, xAxis, yAxis, (6371 * acos (cos ( radians(" + lat
-					+ ") ) * cos( radians( xAxis ) ) * cos( radians( yAxis ) - radians(" + lng + ") ) + sin ( radians("
-					+ lat
-					+ ") ) * sin( radians( yAxis ) ))) AS distance FROM Coordinate HAVING distance < "+ SEARCH_RADIUS + " ORDER BY distance;";
+			
+			String sql = "SELECT coordinateId,categoryId, xAxis, yAxis, lat, lon, (6371 * acos (cos ( radians(" 
+					+ lat + ") ) * cos( radians( lat ) ) * cos( radians( lon ) - radians(" + lng + ") ) + sin ( radians(" 
+					+ lat + ") ) * sin( radians( lat ) ))) AS distance FROM Coordinate HAVING distance < "+ SEARCH_RADIUS + " ORDER BY distance limit " + LIMIT;
 
 			logger.debug(sql);
 
 			NativeQuery<Coordinate> query = session.createNativeQuery(sql, Coordinate.class);
 
-			return query.list();
+			List<Coordinate> coo = query.list();
+
+			if(!coo.isEmpty()) {
+				
+				for(Coordinate c : coo) {
+					
+					if(!hm.containsKey(c.getCategoryId())) {
+						
+						hm.put(c.getCategoryId(), c.getCategoryId());
+						lists.add(c);
+						logger.debug(c);
+					}
+				}
+				
+			}
 
 		} catch (Exception e) {
-			logger.debug(e, e);
+			logger.error(e, e);
 		}
 
-		return null;
+		return lists;
 	}
 
 }
