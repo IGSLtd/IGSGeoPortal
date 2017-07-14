@@ -24,7 +24,8 @@
 <!-- ArcGIS API for JavaScript library references -->
 <script src="//js.arcgis.com/3.10compact"></script>
 
-<%@ include file="portal-js-minis.jsp" %>
+<%@ include file="portal-js-minis.jsp" %> 
+
 
 </head>
 <!-- <body onload="pageLoad();"> -->

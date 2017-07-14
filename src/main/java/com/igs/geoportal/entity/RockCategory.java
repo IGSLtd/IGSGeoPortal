@@ -31,7 +31,8 @@ public class RockCategory {
 		this.categoryId = categoryId;
 	}
 	public String getCategoryName() {
-		return categoryName;
+		categoryName = categoryName.toLowerCase();
+		return categoryName = Character.toUpperCase(categoryName.charAt(0)) + categoryName.substring(1);	
 	}
 	public void setCategoryName(String categoryName) {
 		this.categoryName = categoryName;
@@ -43,13 +44,15 @@ public class RockCategory {
 		this.rcs = rcs;
 	}
 	public String getRcs_d() {
-		return rcs_d;
+		rcs_d = rcs_d.toLowerCase();
+		return rcs_d = Character.toUpperCase(rcs_d.charAt(0)) + rcs_d.substring(1);
 	}
 	public void setRcs_d(String rcs_d) {
 		this.rcs_d = rcs_d;
 	}
 	public String getAge_onegl() {
-		return age_onegl;
+		age_onegl = age_onegl.toLowerCase();
+		return age_onegl = Character.toUpperCase(age_onegl.charAt(0)) + age_onegl.substring(1);
 	}
 	public void setAge_onegl(String age_onegl) {
 		this.age_onegl = age_onegl;
